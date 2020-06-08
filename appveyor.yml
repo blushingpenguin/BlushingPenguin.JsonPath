@@ -1,0 +1,38 @@
+image: Visual Studio 2019
+version: 1.0.{build}
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+before_build:
+- cmd: nuget restore
+environment:
+  CODECOV_REPO_TOKEN:
+    secure: nF0kOXFMucWeQvwLY0JBbeaLFzovYoWp4Lg3IBqDxE9gjytkApRiegaOAl5iqF0O
+configuration:
+  - Release
+test_script:
+  - dotnet test --configuration Release /p:CollectCoverage=true /p:Exclude='\"[*TestAdapter*]*,[nunit]*\"' /p:CoverletOutputFormat=cobertura /p:CoverletOutput="../coverage/BlushingPenguin.JsonPath.coverage.xml" /p:CopyLocalLockFileAssemblies=true BlushingPenguin.JsonPath.Test/BlushingPenguin.JsonPath.Test.csproj
+after_test:
+- ps: |
+    $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
+    Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+    bash codecov.sh -f "coverage/BlushingPenguin.JsonPath.coverage.xml" -t $env:CODECOV_REPO_TOKEN
+for:
+-
+  branches:
+    only:
+      - master
+
+  build:
+    publish_nuget: true
+
+  deploy:
+    provider: NuGet
+    api_key:
+      secure: lo9gC4NDoECBxAzgZZMFKklAQGmyL7VOIfMzPqRB1InlB4D5g4A+tSGUITR2pS6i
+    skip_symbols: false
